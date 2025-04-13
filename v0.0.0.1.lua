@@ -78,7 +78,7 @@ local function CreateFakeCursor()
     FakeCursor.BackgroundColor3 = Color3.new(1, 1, 1)
     FakeCursor.BackgroundTransparency = 0.5
     FakeCursor.BorderSizePixel = 0
-    FakeCursor.ZIndex = 10
+    FakeCursor.ZIndex = 999
     
     local innerDot = Instance.new("Frame")
     innerDot.Size = UDim2.new(0, 4, 0, 4)
@@ -103,7 +103,7 @@ local function CreateCursorFreeGui()
     CursorFreeGui.Name = "AeGiS_CursorFree"
     CursorFreeGui.ResetOnSpawn = false
     CursorFreeGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    CursorFreeGui.DisplayOrder = 10
+    CursorFreeGui.DisplayOrder = 999
     CursorFreeGui.IgnoreGuiInset = true
     
     local modalButton = Instance.new("TextButton")
@@ -112,7 +112,7 @@ local function CreateCursorFreeGui()
     modalButton.Text = ""
     modalButton.Modal = true
     modalButton.Selectable = false
-    modalButton.Active = false
+    modalButton.Active = true
     modalButton.Parent = CursorFreeGui
     
     -- Dark background overlay
@@ -129,12 +129,12 @@ end
 
 -- Settings Menu
 local MenuFrame = Instance.new("Frame")
-MenuFrame.Size = UDim2.new(0, 300, 0, 250)
-MenuFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
+MenuFrame.Size = UDim2.new(0, 300, 0, 350)
+MenuFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 MenuFrame.BorderSizePixel = 0
 MenuFrame.Visible = false
-MenuFrame.ZIndex = 2
+MenuFrame.ZIndex = 1000
 MenuFrame.Active = true
 MenuFrame.Selectable = true
 Instance.new("UICorner", MenuFrame).CornerRadius = UDim.new(0, 8)
@@ -154,7 +154,9 @@ local dragInput
 local dragStart
 local startPos
 
-local function onMenuInputBegan(input)
+local function onMenuInputBegan(input, gameProcessed)
+    if gameProcessed then return end
+    
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
@@ -168,7 +170,9 @@ local function onMenuInputBegan(input)
     end
 end
 
-local function onMenuInputChanged(input)
+local function onMenuInputChanged(input, gameProcessed)
+    if gameProcessed then return end
+    
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
@@ -177,7 +181,9 @@ end
 MenuTitle.InputBegan:Connect(onMenuInputBegan)
 MenuTitle.InputChanged:Connect(onMenuInputChanged)
 
-UserInputService.InputChanged:Connect(function(input)
+UserInputService.InputChanged:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
         MenuFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -191,7 +197,7 @@ local function CreateSlider(label, min, max, value, callback)
     sliderFrame.Size = UDim2.new(0.9, 0, 0, 50)
     sliderFrame.Position = UDim2.new(0.05, 0, 0, yOffset)
     sliderFrame.BackgroundTransparency = 1
-    sliderFrame.ZIndex = 3
+    sliderFrame.ZIndex = 1001
     sliderFrame.Parent = MenuFrame
     
     local labelText = Instance.new("TextLabel")
@@ -202,7 +208,7 @@ local function CreateSlider(label, min, max, value, callback)
     labelText.TextSize = 14
     labelText.TextXAlignment = Enum.TextXAlignment.Left
     labelText.BackgroundTransparency = 1
-    labelText.ZIndex = 3
+    labelText.ZIndex = 1001
     labelText.Parent = sliderFrame
     
     local slider = Instance.new("Frame")
@@ -210,7 +216,7 @@ local function CreateSlider(label, min, max, value, callback)
     slider.Position = UDim2.new(0, 0, 0, 25)
     slider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     slider.BorderSizePixel = 0
-    slider.ZIndex = 3
+    slider.ZIndex = 1001
     Instance.new("UICorner", slider).CornerRadius = UDim.new(1, 0)
     slider.Parent = sliderFrame
     
@@ -218,7 +224,7 @@ local function CreateSlider(label, min, max, value, callback)
     fill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     fill.BorderSizePixel = 0
-    fill.ZIndex = 3
+    fill.ZIndex = 1001
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
     fill.Parent = slider
     
@@ -228,7 +234,7 @@ local function CreateSlider(label, min, max, value, callback)
     handle.BackgroundColor3 = Color3.new(1, 1, 1)
     handle.Text = ""
     handle.BorderSizePixel = 0
-    handle.ZIndex = 4
+    handle.ZIndex = 1002
     Instance.new("UICorner", handle).CornerRadius = UDim.new(1, 0)
     handle.Parent = slider
     
@@ -275,7 +281,7 @@ local function CreateToggle(label, value, callback)
     toggleFrame.Size = UDim2.new(0.9, 0, 0, 30)
     toggleFrame.Position = UDim2.new(0.05, 0, 0, yOffset)
     toggleFrame.BackgroundTransparency = 1
-    toggleFrame.ZIndex = 3
+    toggleFrame.ZIndex = 1001
     toggleFrame.Parent = MenuFrame
     
     local labelText = Instance.new("TextLabel")
@@ -286,7 +292,7 @@ local function CreateToggle(label, value, callback)
     labelText.TextSize = 14
     labelText.TextXAlignment = Enum.TextXAlignment.Left
     labelText.BackgroundTransparency = 1
-    labelText.ZIndex = 3
+    labelText.ZIndex = 1001
     labelText.Parent = toggleFrame
     
     local toggle = Instance.new("TextButton")
@@ -295,7 +301,7 @@ local function CreateToggle(label, value, callback)
     toggle.BackgroundColor3 = value and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(80, 80, 80)
     toggle.Text = ""
     toggle.BorderSizePixel = 0
-    toggle.ZIndex = 3
+    toggle.ZIndex = 1001
     Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 4)
     toggle.Parent = toggleFrame
     
@@ -304,7 +310,7 @@ local function CreateToggle(label, value, callback)
     toggleIndicator.Position = UDim2.new(value and 0.58 or 0, -10.5, 0.5, -10.5)
     toggleIndicator.BackgroundColor3 = Color3.new(1, 1, 1)
     toggleIndicator.BorderSizePixel = 0
-    toggleIndicator.ZIndex = 4
+    toggleIndicator.ZIndex = 1002
     Instance.new("UICorner", toggleIndicator).CornerRadius = UDim.new(1, 0)
     toggleIndicator.Parent = toggle
     
@@ -359,55 +365,23 @@ local function ToggleMenu()
     CursorFreeGui.Enabled = Settings.MenuVisible
     
     if Settings.MenuVisible then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = false
         FakeCursor.Visible = true
     else
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
         UserInputService.MouseIconEnabled = true
         FakeCursor.Visible = false
     end
 end
 
 -- Update fake cursor position
-RunService.RenderStepped:Connect(function()
+local function UpdateFakeCursor()
     if FakeCursor and FakeCursor.Visible then
         local mousePos = UserInputService:GetMouseLocation()
         FakeCursor.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
     end
-    
-    if FOVCircle then
-        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    end
-end)
-
--- Key binds
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    if input.KeyCode == AimKey then
-        Active = true
-        StatusLabel.Text = "AeGiS: ACTIVE [F]"
-        Indicator.Visible = Settings.ShowVisuals
-    elseif input.KeyCode == MenuKey then
-        ToggleMenu()
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    if input.KeyCode == AimKey then
-        Active = false
-        StatusLabel.Text = "AeGiS: READY [F]"
-        Indicator.Visible = false
-    end
-end)
-
--- Cleanup on script termination
-screenGui.Destroying:Connect(function()
-    if FOVCircle then
-        FOVCircle:Remove()
-    end
-end)
+end
 
 -- FIND TARGET --  
 local function FindBestTarget()
@@ -437,7 +411,7 @@ local function FindBestTarget()
         local angle = math.acos(math.clamp(cameraLook:Dot(direction), -1, 1))
         if angle > fovAngleRad then continue end
 
-        local distanceScore = 1 / distance
+               local distanceScore = 1 / distance
         local angleScore = 1 - (angle / fovAngleRad)
         local score = distanceScore * angleScore
         
@@ -485,89 +459,84 @@ local function CalculateAimSuggestion()
         end
     else
         SuggestedLookVector = nil
-       -- UPDATE AIM TARGET CONTINUED --
-       if Settings.ShowVisuals then
-        Indicator.BackgroundColor3 = Color3.new(1, 1, 0)
-        StatusLabel.Text = "AeGiS: SEARCHING"
+        if Settings.ShowVisuals then
+            Indicator.BackgroundColor3 = Color3.new(1, 1, 0)
+            StatusLabel.Text = "AeGiS: SEARCHING"
+        end
     end
-end
 end
 
 -- GENTLY INFLUENCE CAMERA --
 local function ApplyAimAssist()
-if SuggestedLookVector then
-    local currentLook = Camera.CFrame.LookVector
-    local newLook = currentLook:Lerp(SuggestedLookVector, Settings.InfluenceStrength)
-    Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + newLook)
-end
-end
-
--- Toggle menu function
-local function ToggleMenu()
-Settings.MenuVisible = not Settings.MenuVisible
-MenuFrame.Visible = Settings.MenuVisible
-
-if Settings.MenuVisible then
-    CreateCursorFreeGui()
-    CreateFakeCursor()
-    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-else
-    if CursorFreeGui then
-        CursorFreeGui:Destroy()
-        CursorFreeGui = nil
+    if SuggestedLookVector then
+        local currentLook = Camera.CFrame.LookVector
+        local newLook = currentLook:Lerp(SuggestedLookVector, Settings.InfluenceStrength)
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + newLook)
     end
-    if FakeCursor then
-        FakeCursor:Destroy()
-        FakeCursor = nil
-    end
-    UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-end
-end
-
--- Track mouse for fake cursor
-local function UpdateFakeCursor()
-if FakeCursor and UserInputService:GetMouseLocation() then
-    local mousePos = UserInputService:GetMouseLocation()
-    FakeCursor.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
-end
 end
 
 -- INPUT LISTENERS --
-UserInputService.InputBegan:Connect(function(input, processed)
-if not processed then
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
     if input.KeyCode == AimKey then
         Active = true
+        if Settings.ShowVisuals then
+            Indicator.Visible = true
+            StatusLabel.Text = "AeGiS: ACTIVE [F]"
+        end
     elseif input.KeyCode == MenuKey then
         ToggleMenu()
     end
-end
 end)
 
-UserInputService.InputEnded:Connect(function(input, processed)
-if not processed and input.KeyCode == AimKey then
-    Active = false
-end
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == AimKey then
+        Active = false
+        if Settings.ShowVisuals then
+            Indicator.Visible = false
+            StatusLabel.Text = "AeGiS: READY [F]"
+        end
+    end
 end)
 
 -- RENDER LOOP --
 RunService.RenderStepped:Connect(function()
-CalculateAimSuggestion()
-ApplyAimAssist()
-
--- Update fake cursor position
-if Settings.MenuVisible then
-    UpdateFakeCursor()
-end
-
--- Update FOV circle to center of screen
-if Settings.ShowVisuals then
-    local viewportSize = Camera.ViewportSize
-    FOVCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
-    FOVCircle.Radius = Settings.FOVSize * 2
-end
+    CalculateAimSuggestion()
+    ApplyAimAssist()
+    
+    -- Update fake cursor position when menu is open
+    if Settings.MenuVisible then
+        UpdateFakeCursor()
+    end
+    
+    -- Update FOV circle to center of screen
+    if Settings.ShowVisuals then
+        local viewportSize = Camera.ViewportSize
+        FOVCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+        FOVCircle.Radius = Settings.FOVSize * 2
+    end
 end)
 
 -- Initialize mouse behavior
 UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+
+-- Cleanup on script termination
+screenGui.Destroying:Connect(function()
+    if FOVCircle then
+        FOVCircle:Remove()
+    end
+    if CursorFreeGui then
+        CursorFreeGui:Destroy()
+    end
+    if FakeCursor then
+        FakeCursor:Destroy()
+    end
+    -- Restore mouse behavior
+    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    UserInputService.MouseIconEnabled = true
+end)
 
 print("AeGiS Auto-Aim Loaded | Press [F] to toggle assist | [RightShift] for settings")
