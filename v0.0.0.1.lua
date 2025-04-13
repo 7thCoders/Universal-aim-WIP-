@@ -41,6 +41,7 @@ Indicator.Size = UDim2.new(0, 8, 0, 8)
 Indicator.Position = UDim2.new(0.5, -4, 0.5, -4)
 Indicator.BackgroundColor3 = Color3.new(1, 0, 0)
 Indicator.BorderSizePixel = 0
+Indicator.Visible = false
 Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
 Indicator.Parent = screenGui
 
@@ -64,6 +65,7 @@ FOVCircle.Filled = false
 FOVCircle.Transparency = 0.8
 FOVCircle.Color = Color3.fromRGB(0, 170, 255)
 FOVCircle.Visible = Settings.ShowVisuals
+FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
 
 -- Create fake cursor
 local function CreateFakeCursor()
@@ -90,6 +92,7 @@ local function CreateFakeCursor()
     Instance.new("UICorner", innerDot).CornerRadius = UDim.new(1, 0)
     
     FakeCursor.Parent = screenGui
+    FakeCursor.Visible = false
 end
 
 -- Create cursor-free gui function
@@ -100,6 +103,8 @@ local function CreateCursorFreeGui()
     CursorFreeGui.Name = "AeGiS_CursorFree"
     CursorFreeGui.ResetOnSpawn = false
     CursorFreeGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    CursorFreeGui.DisplayOrder = 10
+    CursorFreeGui.IgnoreGuiInset = true
     
     local modalButton = Instance.new("TextButton")
     modalButton.Size = UDim2.new(1, 0, 1, 0)
@@ -119,6 +124,7 @@ local function CreateCursorFreeGui()
     background.Parent = CursorFreeGui
     
     CursorFreeGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    CursorFreeGui.Enabled = false
 end
 
 -- Settings Menu
@@ -127,8 +133,10 @@ MenuFrame.Size = UDim2.new(0, 300, 0, 250)
 MenuFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 MenuFrame.BorderSizePixel = 0
-MenuFrame.Visible = Settings.MenuVisible
+MenuFrame.Visible = false
 MenuFrame.ZIndex = 2
+MenuFrame.Active = true
+MenuFrame.Selectable = true
 Instance.new("UICorner", MenuFrame).CornerRadius = UDim.new(0, 8)
 
 local MenuTitle = Instance.new("TextLabel")
@@ -146,7 +154,7 @@ local dragInput
 local dragStart
 local startPos
 
-MenuTitle.InputBegan:Connect(function(input)
+local function onMenuInputBegan(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
@@ -158,13 +166,16 @@ MenuTitle.InputBegan:Connect(function(input)
             end
         end)
     end
-end)
+end
 
-MenuTitle.InputChanged:Connect(function(input)
+local function onMenuInputChanged(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
-end)
+end
+
+MenuTitle.InputBegan:Connect(onMenuInputBegan)
+MenuTitle.InputChanged:Connect(onMenuInputChanged)
 
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
@@ -221,7 +232,8 @@ local function CreateSlider(label, min, max, value, callback)
     Instance.new("UICorner", handle).CornerRadius = UDim.new(1, 0)
     handle.Parent = slider
     
-    local sliding
+    local sliding = false
+    
     handle.MouseButton1Down:Connect(function()
         sliding = true
     end)
@@ -232,7 +244,8 @@ local function CreateSlider(label, min, max, value, callback)
         end
     end)
     
-    UserInputService.InputChanged:Connect(function(input)
+    local connection
+    connection = UserInputService.InputChanged:Connect(function(input)
         if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
             local xPos = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
             xPos = math.clamp(xPos, 0, 1)
@@ -244,6 +257,12 @@ local function CreateSlider(label, min, max, value, callback)
             labelText.Text = label .. ": " .. tostring(newValue)
             
             callback(newValue)
+        end
+    end)
+    
+    sliderFrame.Destroying:Connect(function()
+        if connection then
+            connection:Disconnect()
         end
     end)
     
@@ -300,18 +319,23 @@ local function CreateToggle(label, value, callback)
     return toggleFrame
 end
 
--- Create settings controls
-CreateSlider("FOV Size", 10, 120, Settings.FOVSize, function(value)
-    Settings.FOVSize = value
-    FOVCircle.Radius = value * 2
-end)
+-- Create UI elements
+CreateFakeCursor()
+CreateCursorFreeGui()
+MenuFrame.Parent = screenGui
 
-CreateSlider("Strength", 0.1, 0.5, Settings.InfluenceStrength, function(value)
+-- Create settings controls
+CreateSlider("Influence Strength", 0.01, 1, Settings.InfluenceStrength, function(value)
     Settings.InfluenceStrength = value
 end)
 
-CreateSlider("Max Distance", 100, 2000, Settings.MaxDistance, function(value)
+CreateSlider("Max Distance", 10, 2000, Settings.MaxDistance, function(value)
     Settings.MaxDistance = value
+end)
+
+CreateSlider("FOV Size", 10, 180, Settings.FOVSize, function(value)
+    Settings.FOVSize = value
+    FOVCircle.Radius = value * 2
 end)
 
 CreateToggle("Team Check", Settings.TeamCheck, function(value)
@@ -325,11 +349,65 @@ end)
 CreateToggle("Show Visuals", Settings.ShowVisuals, function(value)
     Settings.ShowVisuals = value
     FOVCircle.Visible = value
-    Indicator.Visible = value
-    StatusLabel.Visible = value
+    Indicator.Visible = value and Active
 end)
 
-MenuFrame.Parent = screenGui
+-- Toggle menu function
+local function ToggleMenu()
+    Settings.MenuVisible = not Settings.MenuVisible
+    MenuFrame.Visible = Settings.MenuVisible
+    CursorFreeGui.Enabled = Settings.MenuVisible
+    
+    if Settings.MenuVisible then
+        UserInputService.MouseIconEnabled = false
+        FakeCursor.Visible = true
+    else
+        UserInputService.MouseIconEnabled = true
+        FakeCursor.Visible = false
+    end
+end
+
+-- Update fake cursor position
+RunService.RenderStepped:Connect(function()
+    if FakeCursor and FakeCursor.Visible then
+        local mousePos = UserInputService:GetMouseLocation()
+        FakeCursor.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
+    end
+    
+    if FOVCircle then
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    end
+end)
+
+-- Key binds
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == AimKey then
+        Active = true
+        StatusLabel.Text = "AeGiS: ACTIVE [F]"
+        Indicator.Visible = Settings.ShowVisuals
+    elseif input.KeyCode == MenuKey then
+        ToggleMenu()
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == AimKey then
+        Active = false
+        StatusLabel.Text = "AeGiS: READY [F]"
+        Indicator.Visible = false
+    end
+end)
+
+-- Cleanup on script termination
+screenGui.Destroying:Connect(function()
+    if FOVCircle then
+        FOVCircle:Remove()
+    end
+end)
 
 -- FIND TARGET --  
 local function FindBestTarget()
